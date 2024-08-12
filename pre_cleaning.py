@@ -29,23 +29,27 @@ metrics = ['Min. Lead. Edge Dayrate', 'Avg. Lead. Edge Dayrate',
            'Max. Lead. Edge Dayrate', 'Rigs Working', 'Utilization (MF)', 
            'Rigs Committed', 'Marketed Supply', 'Comm. Utilization (MF)', 'Total Supply']
 
-# Iterate over the metrics and populate the respective DataFrames
-for metric in metrics:
-    for month in range(1, 13):  # Iterate from January to December
-        for type_ in ['Drillship', 'Jackup', 'Semisub']:
-            col_name = f'2010 {pd.to_datetime(month, format="%m").strftime("%b")} {type_}'
-            if col_name in df_raw.columns:
-                value = df_raw[df_raw['Metric'] == metric][col_name].values
-                if value.size > 0:
-                    value = clean_value(value[0])
-                    date = pd.to_datetime(f'2010-{month:02d}-01', format='%Y-%m-%d')
-                    
-                    if type_ == 'Drillship':
-                        drillship_df.loc[date, metric] = value
-                    elif type_ == 'Jackup':
-                        jackup_df.loc[date, metric] = value
-                    elif type_ == 'Semisub':
-                        semisub_df.loc[date, metric] = value
+# Get unique years from the data
+years = df_raw.columns[df_raw.columns.str.contains(r'\d{4}')].str.extract(r'(\d{4})')[0].unique()
+
+# Iterate over each year
+for year in years:
+    for metric in metrics:
+        for month in range(1, 13):  # Iterate from January to December
+            for type_ in ['Drillship', 'Jackup', 'Semisub']:
+                col_name = f'{year} {pd.to_datetime(month, format="%m").strftime("%b")} {type_}'
+                if col_name in df_raw.columns:
+                    value = df_raw[df_raw['Metric'] == metric][col_name].values
+                    if value.size > 0:
+                        value = clean_value(value[0])
+                        date = pd.to_datetime(f'{year}-{month:02d}-01', format='%Y-%m-%d')
+                        
+                        if type_ == 'Drillship':
+                            drillship_df.loc[date, metric] = value
+                        elif type_ == 'Jackup':
+                            jackup_df.loc[date, metric] = value
+                        elif type_ == 'Semisub':
+                            semisub_df.loc[date, metric] = value
 
 # Clean and format DataFrames
 def clean_dataframe(df):
@@ -68,4 +72,3 @@ print("\nJackup DataFrame:")
 print(jackup_df)
 print("\nSemisub DataFrame:")
 print(semisub_df)
-
