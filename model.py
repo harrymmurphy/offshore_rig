@@ -5,8 +5,8 @@ from statsmodels.tsa.statespace.sarimax import SARIMAX
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 
-# Load the new data file provided by the user
-new_data = pd.read_csv(r'C:\Users\Harry Murphy\OneDrive\Desktop\test_data.csv', parse_dates=['Date'], index_col='Date')
+# Load Datafile with rig you want to test
+new_data = pd.read_csv(r'C:\Users\Harry Murphy\OneDrive\Desktop\your_file.csv', parse_dates=['Date'], index_col='Date')
 
 # Lag the Demand_Index backwards by 1.5 years (18 months)
 new_data['Demand_Index'] = new_data['Demand_Index'].shift(-18)  # Lagging backwards by 1.5 years (18 months)
