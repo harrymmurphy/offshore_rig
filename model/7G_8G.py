@@ -5,8 +5,8 @@ from statsmodels.tsa.statespace.sarimax import SARIMAX
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 
-# Load Datafile with rig you want to test
-new_data = pd.read_csv(r'C:\Users\Harry Murphy\OneDrive\Desktop\your_file.csv', parse_dates=['Date'], index_col='Date')
+# Load the new data file provided by the user
+new_data = pd.read_csv(r'C:\Users\Harry Murphy\OneDrive\Desktop\test_data.csv', parse_dates=['Date'], index_col='Date')
 
 # Lag the Demand_Index backwards by 1.5 years (18 months)
 new_data['Demand_Index'] = new_data['Demand_Index'].shift(-18)  # Lagging backwards by 1.5 years (18 months)
@@ -19,7 +19,7 @@ forecast_index_36_months = pd.date_range(start='2024-08-01', periods=forecast_le
 new_data.fillna(method='ffill', inplace=True)
 
 # Apply smoothing to the target variable and exogenous variables
-smoothed_dayrate_extended = new_data['Average Lead Dayrate'].rolling(window=6, center=True).mean().fillna(method='ffill').fillna(method='bfill')
+smoothed_dayrate_extended = new_data['Max Lead Dayrate'].rolling(window=6, center=True).mean().fillna(method='ffill').fillna(method='bfill')
 smoothed_exog_extended = new_data[['Supply Tightness Index', 'Demand_Index']].rolling(window=6, center=True).mean().fillna(method='ffill').fillna(method='bfill')
 
 # Standardize the exogenous variables for regularization
@@ -91,3 +91,32 @@ plt.show()
 # Extract the final forecast value for the last month in the 36-month forecast period
 final_forecast_value_36_months = forecast_values_36_months.iloc[-1]
 print("Final forecast value for the last month in the 36-month forecast period:", final_forecast_value_36_months)
+from sklearn.metrics import mean_squared_error, mean_absolute_error
+
+# Define a validation period (e.g., the last 12 months of historical data)
+validation_period = '2020-08-01'  # Adjust this period as needed
+validation_data = smoothed_dayrate_extended[validation_period:'2024-07-01']
+validation_exog = smoothed_exog_standardized_extended.loc[validation_data.index]
+
+# Generate predictions for the validation period
+validation_predictions = sarimax_results_final.get_prediction(start=validation_period, end='2024-07-01', exog=validation_exog).predicted_mean
+
+# Calculate RMSE and MAE
+rmse = np.sqrt(mean_squared_error(validation_data, validation_predictions))
+mae = mean_absolute_error(validation_data, validation_predictions)
+
+print("RMSE for the validation period:", rmse)
+print("MAE for the validation period:", mae)
+
+# Plot the validation results
+plt.figure(figsize=(10, 6))
+plt.plot(validation_data.index, validation_data, label='Actual Average Lead Dayrate (Validation Period)', color='blue')
+plt.plot(validation_predictions.index, validation_predictions, label='Predicted Average Lead Dayrate (Validation Period)', color='red', linestyle='--')
+plt.title('Validation Period: Actual vs Predicted Dayrates')
+plt.xlabel('Date')
+plt.ylabel('Average Lead Dayrate')
+plt.legend()
+plt.show()
+
+file = r'C:\Users\Harry Murphy\OneDrive\Desktop\test_data.csv'
+full_forecast_36_months.to_csv(file)
